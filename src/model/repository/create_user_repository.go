@@ -7,6 +7,9 @@ import (
 	"github.com/fernale/crud-go/src/configuration/logger"
 	rest_err "github.com/fernale/crud-go/src/configuration/rest_err"
 	"github.com/fernale/crud-go/src/model"
+	"github.com/fernale/crud-go/src/model/repository/entity/converter"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.uber.org/zap"
 )
 
 var (
@@ -14,13 +17,23 @@ var (
 )
 
 func (ur *userRepository) CreateUser(userDomain model.UserDomainInterface) (model.UserDomainInterface, *rest_err.RestErr) {
-	logger.Info("Init createUser repository")
+	logger.Info("Init createUser repository",zap.String("journey", "createUser"))
 
 	collection_name := os.Getenv(MONGODB_USER_COLLECTION)
 
 	collection := ur.databaseConnection.Collection(collection_name)
 
-	userDomain.GetJSONValue();
+	value := converter.ConvertDomainToEntity(userDomain)
+	
+	result, err := collection.InsertOne(context.Background(), value)
+	if err != nil {
+		logger.Error("Error trying to create User", err, zap.String("journey", "createUser"))
+		return nil, rest_err.NewInternalServerError(err.Error())
+	}
 
-	collection.InsertOne(context.Background())
+	value.ID = result.InsertedID.(bson.ObjectID)
+
+	logger.Info("CreateUser repository executed successfully",zap.String("userId", value.ID.Hex()),zap.String("journey", "createUser"))
+
+	return converter.ConvertEntityToDomain(*value), nil
 }
