@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/fernale/crud-go/src/configuration/database/mongodb"
 	"github.com/fernale/crud-go/src/configuration/logger"
 	"github.com/fernale/crud-go/src/controller"
 	"github.com/fernale/crud-go/src/controller/routes"
@@ -18,6 +19,8 @@ func main(){
 		log.Fatal("Error loading .env file")
 	}
 	
+	mongodb.NewMongoDBConnection()
+
 	//init dependencies
 	service := service.NewUserDomainService()
 	userController := controller.NewUserControllerInterface(service)
